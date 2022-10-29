@@ -11,9 +11,9 @@ jobs:
   test:
     runs-on: ubuntu-latest
     # Define `working-directory` if you application is in a subfolder
-    defaults:
-      run:
-        working-directory: ctcicd-userapi
+    # defaults:
+      # run:
+      #   working-directory: ctcicd-userapi
     container: node
     # Service containers to run with `runner-job`
     services:
@@ -26,7 +26,7 @@ jobs:
           - 6379:6379
     strategy:
       matrix:
-        node-version: [10.x, 12.x, 14.x]
+        node-version: [14.x]
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
     steps:
     - uses: actions/checkout@v2
