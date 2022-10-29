@@ -7,34 +7,56 @@ on:
     branches: [ main ]
 
 jobs:
-  # CI part
+  # CI part, label of the runner job
   test:
     runs-on: ubuntu-latest
     # Define `working-directory` if you application is in a subfolder
     # defaults:
       # run:
       #   working-directory: ctcicd-userapi
-    container: node
+    # container: node
     # Service containers to run with `runner-job`
     services:
       # Label used to access the service container
       redis:
         # Docker Hub image
         image: redis
+        # Set health checks to wait until redis has started
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
         ports:
-          # Opens tcp port 6379 on the host and service container
+          # Maps port 6379 on service container to the host
           - 6379:6379
     strategy:
       matrix:
         node-version: [14.x]
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
     steps:
-    - uses: actions/checkout@v2
+    - name: Check out repository code 
+      uses: actions/checkout@v2
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v2
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
         cache-dependency-path: '**/package-lock.json'
-    - run: npm ci
+    - name: Install dependencies
+      run: npm ci
     - run: npm test  
+  
+  # CD part, label of the runner job
+  deploy:
+    needs: test  # CI part
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code 
+        uses: actions/checkout@v2
+      - name: Use Heroku Deploy action
+        uses: akhileshns/heroku-deploy@v3.12.12  # This is the action
+        with:
+          heroku_api_key: ${{secrets.HEROKU_API_KEY}}
+          heroku_app_name: "cd-userapi"
+          heroku_email: "ana.escobar-llamazares@edu.dsti.institute"
